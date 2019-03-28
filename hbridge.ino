@@ -74,30 +74,43 @@ void setup() //set up SPI and serial comm
   SPI.begin(); //Initialize SPI communication
   delay(100); //Wait 100ms
   /* Enable Half-bridges */
+  x.srr = 1 ;
+  Serial.print("Cmd: ");Serial.println(x.cmd); //Print the 16 bit command to serial port
+  digitalWrite(SS,LOW); //set the chip select to low for SPI comm to start
+  y.data = SPI.transfer16(x.cmd); //Transfer the command to the slave (output of this command is garbage because there is no command before this one)
+  digitalWrite(SS,HIGH); //set the chip select to high for HBridge to work
+  Serial.print("Init reset: "); Serial.println(y.data);
+  delay(1000);
+  x.srr = 0 ;
   x.hben3 = 1 ; 
   x.hben4 = 1 ;
   x.hben1 = 1 ;
   x.hben2 = 1 ;
-  
+  x.hbsel = 0 ;
   Serial.print("Cmd: ");Serial.println(x.cmd); //Print the 16 bit command to serial port
-  
+  digitalWrite(SS,LOW);
   y.data = SPI.transfer16(x.cmd); //Transfer the command to the slave (output of this command is garbage because there is no command before this one)
+  digitalWrite(SS,HIGH);
   Serial.print("Init: "); Serial.println(y.data); //Should return garbage value
   delay(1000); //Wait 1s
 }
 void loop() { //Entering loop, everything in here will be repeated indefinitely by Arduino
-    x.hbcnf3 = 1; //HB3 on
-    x.hbcnf4 = 0; //HB4 off
+    x.hbcnf3 = 0; //HB3 on
+    x.hbcnf4 = 1; //HB4 off
     x.hbcnf1 = 1; //HB1 on
     x.hbcnf2 = 0; //HB2 off
+    digitalWrite(SS,LOW);
     y.data=SPI.transfer16(x.cmd); //Transfer the command, and recover the status of the previous command
+    digitalWrite(SS,HIGH);
     Serial.print("On: ");Serial.println(y.data); //print status of previous command to serial
     delay(1000); //Wait 1s
-    x.hbcnf3 = 0; //HB3 off
-    x.hbcnf4 = 1; //HB4 on
+    x.hbcnf3 = 1; //HB3 off
+    x.hbcnf4 = 0; //HB4 on
     x.hbcnf1 = 0; //HB1 off
     x.hbcnf2 = 1; //HB2 off
+    digitalWrite(SS,LOW);
     y.data=SPI.transfer16(x.cmd); //Transfer the command, and recover the status of the previous command
+    digitalWrite(SS,HIGH);
     Serial.print("Off: ");Serial.println(y.data); //print status of previous command to serial
     delay(1000); //Wait 1s
     //The use of the words "On" and "Off" is purely circumstantial.
